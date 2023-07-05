@@ -4,14 +4,17 @@ import React, { useState } from 'react';
 import { Configuration, OpenAIApi } from 'openai';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
+import * as Speech from 'expo-speech';
 import {
   StyleSheet,
   Text,
+  Platform,
   TextInput,
   TouchableOpacity,
   View,
   SafeAreaView,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 
@@ -25,42 +28,13 @@ export default function App() {
   const [outputMessage, setOutputMessage] = useState('');
 
   const handleClick = async () => {
-    const message = {
-      _id: Math.random().toString(36).substring(7),
-      text: inputMessage,
-      createdAt: new Date(),
-      user: {
-        _id: 1,
-      },
-    };
-    setMessages((previousMessages) =>
-      GiftedChat.append(previousMessages, [message])
-    );
-    try {
-      const completion = await openai.createChatCompletion({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: `${inputMessage}` }],
-      });
-      console.log(completion.data.choices[0].message.content);
-      const aiMessage =
-        completion && completion.data.choices[0].message.content.trim();
-      setOutputMessage(aiMessage);
-      const message = {
-        _id: Math.random().toString(36).substring(7),
-        text: aiMessage,
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: 'Fox',
-        },
-      };
-      setMessages((previousMessages) =>
-        GiftedChat.append(previousMessages, [message])
-      );
-    } catch (error) {
-      console.log(error.message, 'ERROR');
+    console.log(inputMessage);
+    if (inputMessage.toLocaleLowerCase().startsWith('generate image')) {
+      generateImages();
+    } else {
+      generateText();
     }
-    setInputMessage('');
+    Keyboard.dismiss();
   };
 
   const generateImages = async () => {
@@ -79,26 +53,68 @@ export default function App() {
       if (openai) console.log('openai image is ready');
       const response = await openai.createImage({
         prompt: `${inputMessage}`,
-        n: 1,
+        n: 2,
         size: '1024x1024',
       });
       const image_url = response && response.data.data[0].url;
       setOutputMessage(image_url);
+      response.data.data.map((image) => {
+        const message = {
+          _id: Math.random().toString(36).substring(7),
+          text: 'Image',
+          createdAt: new Date(),
+          user: {
+            _id: 2,
+            name: 'Fox',
+          },
+          image: image.url,
+        };
+        setMessages((previousMessages) =>
+          GiftedChat.append(previousMessages, [message])
+        );
+      });
+    } catch (error) {
+      console.log(error.message, 'ERROR CREATING IMAGE');
+    }
+    setInputMessage('');
+  };
+
+  const generateText = async () => {
+    const message = {
+      _id: Math.random().toString(36).substring(7),
+      text: inputMessage,
+      createdAt: new Date(),
+      user: {
+        _id: 1,
+      },
+    };
+    setMessages((previousMessages) =>
+      GiftedChat.append(previousMessages, [message])
+    );
+    try {
+      const completion = await openai.createChatCompletion({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: `${inputMessage}` }],
+      });
+      const aiMessage =
+        completion && completion.data.choices[0].message.content.trim();
+      setOutputMessage(aiMessage);
       const message = {
         _id: Math.random().toString(36).substring(7),
-        text: 'Image',
+        text: aiMessage,
         createdAt: new Date(),
         user: {
           _id: 2,
           name: 'Fox',
         },
-        image: image_url,
       };
       setMessages((previousMessages) =>
         GiftedChat.append(previousMessages, [message])
       );
+      const options = {};
+      Speech.speak(aiMessage, options);
     } catch (error) {
-      console.log(error.message, 'ERROR CREATING IMAGE');
+      console.log(error.message, 'ERROR');
     }
     setInputMessage('');
   };
@@ -113,62 +129,64 @@ export default function App() {
           minInputToolbarHeight={0}
         />
       </View>
-      <View
-        style={{ flexDirection: 'row', columnGap: 8, alignItems: 'center' }}
-      >
-        <View style={{ flex: 1, marginLeft: 10, marginBottom: 20 }}>
-          <TextInput
-            style={{
-              backgroundColor: '#fff',
-              padding: 10,
-              borderRadius: 10,
-              borderColor: '#ccc',
-              borderWidth: 1,
-              height: 50,
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 1,
-                height: 3,
-              },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
+      <KeyboardAvoidingView behavior='position' style={{}}>
+        <View
+          style={{ flexDirection: 'row', columnGap: 8, alignItems: 'center' }}
+        >
+          <View style={{ flex: 1, marginLeft: 10, marginBottom: 20 }}>
+            <TextInput
+              style={{
+                backgroundColor: '#fff',
+                padding: 10,
+                borderRadius: 10,
+                borderColor: '#ccc',
+                borderWidth: 1,
+                height: 50,
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 1,
+                  height: 3,
+                },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
 
-              elevation: 5,
-            }}
-            placeholder='Enter Query'
-            onChangeText={(text) => setInputMessage(text)}
-            value={inputMessage}
-          />
-        </View>
-        <TouchableOpacity onPress={generateImages}>
-          <View
-            style={{
-              backgroundColor: '#171717',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              display: 'flex',
-              padding: 8,
-              marginRight: 10,
-              marginBottom: 20,
-              borderRadius: 50,
-              height: 50,
-              width: 50,
-              shadowColor: '#000',
-              shadowOffset: {
-                width: 1,
-                height: 3,
-              },
-              shadowOpacity: 0.5,
-              shadowRadius: 3.84,
-
-              elevation: 5,
-            }}
-          >
-            <MaterialCommunityIcons name='send' size={30} color='#eee' />
+                elevation: 5,
+              }}
+              placeholder='Enter Query'
+              onChangeText={(text) => setInputMessage(text)}
+              value={inputMessage}
+            />
           </View>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity onPress={handleClick}>
+            <View
+              style={{
+                backgroundColor: '#171717',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                display: 'flex',
+                padding: 8,
+                marginRight: 10,
+                marginBottom: 20,
+                borderRadius: 50,
+                height: 50,
+                width: 50,
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 1,
+                  height: 3,
+                },
+                shadowOpacity: 0.5,
+                shadowRadius: 3.84,
+
+                elevation: 5,
+              }}
+            >
+              <MaterialCommunityIcons name='send' size={30} color='#eee' />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
 
       <StatusBar style='auto' />
     </SafeAreaView>
