@@ -51,6 +51,7 @@ export default function App() {
         createdAt: new Date(),
         user: {
           _id: 2,
+          name: 'Fox',
         },
       };
       setMessages((previousMessages) =>
@@ -63,6 +64,17 @@ export default function App() {
   };
 
   const generateImages = async () => {
+    const message = {
+      _id: Math.random().toString(36).substring(7),
+      text: inputMessage,
+      createdAt: new Date(),
+      user: {
+        _id: 1,
+      },
+    };
+    setMessages((previousMessages) =>
+      GiftedChat.append(previousMessages, [message])
+    );
     try {
       if (openai) console.log('openai image is ready');
       const response = await openai.createImage({
@@ -71,8 +83,20 @@ export default function App() {
         size: '1024x1024',
       });
       const image_url = response && response.data.data[0].url;
-      console.log(image_url);
       setOutputMessage(image_url);
+      const message = {
+        _id: Math.random().toString(36).substring(7),
+        text: 'Image',
+        createdAt: new Date(),
+        user: {
+          _id: 2,
+          name: 'Fox',
+        },
+        image: image_url,
+      };
+      setMessages((previousMessages) =>
+        GiftedChat.append(previousMessages, [message])
+      );
     } catch (error) {
       console.log(error.message, 'ERROR CREATING IMAGE');
     }
@@ -86,6 +110,7 @@ export default function App() {
           renderInputToolbar={() => {}}
           messages={messages}
           user={{ _id: 1 }}
+          minInputToolbarHeight={0}
         />
       </View>
       <View
@@ -115,7 +140,7 @@ export default function App() {
             value={inputMessage}
           />
         </View>
-        <TouchableOpacity onPress={handleClick}>
+        <TouchableOpacity onPress={generateImages}>
           <View
             style={{
               backgroundColor: '#171717',
