@@ -5,6 +5,7 @@ import { Configuration, OpenAIApi } from 'openai';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
+import * as SplashScreen from 'expo-splash-screen';
 import {
   StyleSheet,
   TextInput,
