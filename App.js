@@ -7,14 +7,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import {
   StyleSheet,
-  Text,
-  Platform,
   TextInput,
   TouchableOpacity,
   View,
   SafeAreaView,
   KeyboardAvoidingView,
   Keyboard,
+  ImageBackground,
 } from 'react-native';
 import { GiftedChat } from 'react-native-gifted-chat';
 
@@ -24,20 +23,22 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 export default function App() {
   const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [outputMessage, setOutputMessage] = useState('');
 
   const handleClick = async () => {
-    console.log(inputMessage);
     if (inputMessage.toLocaleLowerCase().startsWith('generate image')) {
       generateImages();
     } else {
       generateText();
     }
+    setInputMessage('');
     Keyboard.dismiss();
   };
 
   const generateImages = async () => {
+    setLoading(true);
     const message = {
       _id: Math.random().toString(36).substring(7),
       text: inputMessage,
@@ -76,10 +77,12 @@ export default function App() {
     } catch (error) {
       console.log(error.message, 'ERROR CREATING IMAGE');
     }
-    setInputMessage('');
+
+    setLoading(false);
   };
 
   const generateText = async () => {
+    setLoading(true);
     const message = {
       _id: Math.random().toString(36).substring(7),
       text: inputMessage,
@@ -116,80 +119,87 @@ export default function App() {
     } catch (error) {
       console.log(error.message, 'ERROR');
     }
-    setInputMessage('');
+
+    setLoading(false);
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={{ flex: 1, justifyContent: 'center' }}>
-        <GiftedChat
-          renderInputToolbar={() => {}}
-          messages={messages}
-          user={{ _id: 1 }}
-          minInputToolbarHeight={0}
-        />
-      </View>
-      <KeyboardAvoidingView behavior='position' style={{}}>
-        <View
-          style={{ flexDirection: 'row', columnGap: 8, alignItems: 'center' }}
-        >
-          <View style={{ flex: 1, marginLeft: 10, marginBottom: 20 }}>
-            <TextInput
-              style={{
-                backgroundColor: '#fff',
-                padding: 10,
-                borderRadius: 10,
-                borderColor: '#ccc',
-                borderWidth: 1,
-                height: 50,
-                shadowColor: '#000',
-                shadowOffset: {
-                  width: 1,
-                  height: 3,
-                },
-                shadowOpacity: 0.25,
-                shadowRadius: 3.84,
-
-                elevation: 5,
-              }}
-              placeholder='Enter Query'
-              onChangeText={(text) => setInputMessage(text)}
-              value={inputMessage}
-            />
-          </View>
-          <TouchableOpacity onPress={handleClick}>
-            <View
-              style={{
-                backgroundColor: '#171717',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                display: 'flex',
-                padding: 8,
-                marginRight: 10,
-                marginBottom: 20,
-                borderRadius: 50,
-                height: 50,
-                width: 50,
-                shadowColor: '#000',
-                shadowOffset: {
-                  width: 1,
-                  height: 3,
-                },
-                shadowOpacity: 0.5,
-                shadowRadius: 3.84,
-
-                elevation: 5,
-              }}
-            >
-              <MaterialCommunityIcons name='send' size={30} color='#eee' />
-            </View>
-          </TouchableOpacity>
+    <ImageBackground
+      source={require('./assets/bg.jpg')}
+      resizeMode='cover'
+      style={{ flex: 1, width: '100%', height: '100%' }}
+    >
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <GiftedChat
+            renderInputToolbar={() => {}}
+            messages={messages}
+            user={{ _id: 1 }}
+            minInputToolbarHeight={0}
+          />
         </View>
-      </KeyboardAvoidingView>
+        <KeyboardAvoidingView behavior='position' style={{}}>
+          <View
+            style={{ flexDirection: 'row', columnGap: 8, alignItems: 'center' }}
+          >
+            <View style={{ flex: 1, marginLeft: 10, marginBottom: 20 }}>
+              <TextInput
+                style={{
+                  backgroundColor: '#fff',
+                  padding: 10,
+                  borderRadius: 10,
+                  borderColor: '#ccc',
+                  borderWidth: 1,
+                  height: 50,
+                  shadowColor: '#000',
+                  shadowOffset: {
+                    width: 1,
+                    height: 3,
+                  },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
 
-      <StatusBar style='auto' />
-    </SafeAreaView>
+                  elevation: 5,
+                }}
+                placeholder='Enter Query'
+                onChangeText={(text) => setInputMessage(text)}
+                value={inputMessage}
+              />
+            </View>
+            <TouchableOpacity onPress={handleClick} disabled={loading}>
+              <View
+                style={{
+                  backgroundColor: '#171717',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  display: 'flex',
+                  padding: 8,
+                  marginRight: 10,
+                  marginBottom: 20,
+                  borderRadius: 50,
+                  height: 50,
+                  width: 50,
+                  shadowColor: '#000',
+                  shadowOffset: {
+                    width: 1,
+                    height: 3,
+                  },
+                  shadowOpacity: 0.5,
+                  shadowRadius: 3.84,
+
+                  elevation: 5,
+                }}
+              >
+                <MaterialCommunityIcons name='send' size={30} color='#eee' />
+              </View>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+
+        <StatusBar style='auto' />
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
